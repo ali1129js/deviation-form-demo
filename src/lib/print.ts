@@ -1,6 +1,6 @@
 import { FIELD_LABEL, type FieldName, type Report } from "./schema";
 
-const ORDER: FieldName[] = ["orderId", "batch", "materialNo", "line", "shift", "date", "category", "description", "measures", "reportedBy", "shiftLead"];
+const ORDER: FieldName[] = ["orderId", "materialNo", "materialName", "batch", "quantity", "line", "shift", "date", "category", "description", "cause", "measures", "impact", "correction", "reportedBy", "shiftLead"];
 
 export const formatDate = (iso: string) => {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -11,6 +11,7 @@ export const formatDate = (iso: string) => {
 export function printRows(r: Report): { label: string; value: string }[] {
   return ORDER.map((f) => {
     const raw = String(r.data[f] ?? "").trim();
-    return { label: FIELD_LABEL[f], value: raw ? (f === "date" ? formatDate(raw) : raw) : "______________" };
+    const value = f === "date" ? formatDate(raw) : f === "quantity" && raw ? `${raw} ${r.data.unit}`.trim() : raw;
+    return { label: FIELD_LABEL[f], value: raw ? value : "______________" };
   });
 }

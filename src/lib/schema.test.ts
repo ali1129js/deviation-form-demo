@@ -17,10 +17,14 @@ describe("validation", () => {
 });
 
 describe("print", () => {
+  it("prints quantity with unit", () => {
+    const r = { id: 1, number: "DR-2026-0001", status: "entwurf" as const, createdAt: "", updatedAt: "", data: SAMPLE_REPORTS[0]! };
+    expect(printRows(r).find((x) => x.label === "Auftragsmenge")?.value).toBe("120000 Stück");
+  });
   it("formats dates", () => expect(formatDate("2026-03-12")).toBe("12.03.2026"));
   it("renders blanks for empty fields", () => {
     const rows = printRows({ id: 1, number: "DR-2026-0001", status: "entwurf", createdAt: "", updatedAt: "", data: emptyData() });
     expect(rows.every((r) => r.value.startsWith("___"))).toBe(true);
-    expect(rows).toHaveLength(11);
+    expect(rows).toHaveLength(16);
   });
 });

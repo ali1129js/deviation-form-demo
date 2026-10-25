@@ -1,4 +1,4 @@
-import { LINES, SHIFTS } from "../schema";
+import { LINES, SHIFTS, UNITS } from "../schema";
 import { ImportError, type ImportResult, type ImportValues } from "./types";
 
 /** Normalises typical OCR confusions inside digit sequences (O→0, l/I→1, S→5, B→8). */
@@ -13,7 +13,7 @@ export function parseOrderText(text: string, source: string): ImportResult {
   const v: ImportValues = {};
   const t = text.replace(/\r/g, "");
 
-  const order = find(t, /Auftrag(?:s-?nr\.?)?\s*[:.]?\s*([0-9OoIlSB|]{6,10})\b/i);
+  const order = find(t, /Auftrag(?:s-?(?:nr\.?|ID))?\s*[:.]?\s*([0-9OoIlSB|]{6,10})\b/i);
   if (order) {
     const value = fixDigits(order);
     v.orderId = { value, raw: order, confidence: value === order ? "hoch" : "mittel",
@@ -25,6 +25,17 @@ export function parseOrderText(text: string, source: string): ImportResult {
   const mat = find(t, /Material[\s-]*Nr\.?\s*[:.]?\s*([0-9OIlSB][0-9OIlSB\- ]{4,16}[0-9OIlSB])/i);
   if (mat) v.materialNo = { value: fixDigits(mat).replace(/\s+/g, ""), confidence: "hoch" };
 
+  const name = find(t, /Materialname\s*[:.]?\s*([^\n]{3,80})/i);
+  if (name) v.materialName = { value: name, confidence: "hoch" };
+
+  const qty = t.match(/(?:Auftrags)?menge\s*[:.]?\s*([0-9OIl][0-9OIl. ]*?)[ \t]*([A-Za-zÄÖÜäöü]+)?(?=[ \t]*(?:\n|$))/i);
+  if (qty?.[1]) {
+    const value = fixDigits(qty[1]).replace(/[.\s]/g, "");
+    v.quantity = { value, confidence: "hoch" };
+    const u = UNITS.find((x) => x.toLowerCase() === (qty[2] ?? "").toLowerCase());
+    if (u) v.unit = { value: u, confidence: "hoch" };
+    else if (qty[2]) v.unit = { value: "", raw: qty[2], confidence: "niedrig", hint: `Einheit „${qty[2]}“ unbekannt.` };
+  }
   const line = find(t, /Linie\s*[:.]?\s*([0-9Il|]+)/i);
   if (line) {
     const n = fixDigits(line);

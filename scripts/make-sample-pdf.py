@@ -12,14 +12,15 @@ def font(size, bold=False):
     return ImageFont.truetype(f"/usr/share/fonts/truetype/dejavu/{name}", size)
 
 d.text((120, 120), "MUSTERWERK GMBH (FIKTIV)", font=font(46, True), fill=20)
-d.text((120, 190), "Produktionsauftrag – Beispieldokument für Demo-Zwecke", font=font(30), fill=40)
+d.text((120, 190), "Auftragsbericht – Beispieldokument für Demo-Zwecke", font=font(30), fill=40)
 d.line((120, 250, W - 120, 250), fill=30, width=3)
-rows = [("Auftrag:", "4711002"), ("Charge:", "DEMO-1234"), ("Material-Nr.:", "900-555-77"),
-        ("Linie:", "3"), ("Schicht:", "Spät"), ("Datum:", "18.03.2026")]
+rows = [("Auftrags-ID:", "100045933"), ("Material-Nr.:", "8812345"),
+        ("Materialname:", "Musterprodukt 20 mg Filmtabletten (fiktiv)"), ("Charge:", "MW26C0309"),
+        ("Auftragsmenge:", "96.000 Stück"), ("Linie:", "3"), ("Schicht:", "Spät"), ("Datum:", "18.03.2026")]
 y = 320
 for k, v in rows:
     d.text((140, y), k, font=font(38), fill=30)
-    d.text((620, y), v, font=font(40, True), fill=15)
+    d.text((520, y), v, font=font(36 if len(v) > 20 else 40, True), fill=15)
     y += 90
 d.text((140, y + 60), "Alle Angaben frei erfunden. Kein echtes Dokument.", font=font(28), fill=60)
 for _ in range(3000):  # scanner speckles

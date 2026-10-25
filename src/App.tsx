@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { ReportRepository, StorageError, ValidationError } from "./lib/storage";
-import { CATEGORIES, emptyData, FIELD_LABEL, LINES, SHIFTS, type FieldName, type Report, type ReportData } from "./lib/schema";
+import { CATEGORIES, emptyData, FIELD_LABEL, LINES, SHIFTS, UNITS, type FieldName, type Report, type ReportData } from "./lib/schema";
 import { SAMPLE_REPORTS } from "./lib/sample";
 import { formatDate, printRows } from "./lib/print";
 import { OcrImport } from "./components/OcrImport";
+import { AssistedTextarea } from "./components/AssistedTextarea";
+import type { TextField } from "./lib/suggestions";
 
 type Route = { view: "list" } | { view: "edit"; id: number | null } | { view: "print"; id: number };
 const parseHash = (): Route => {
@@ -57,7 +59,7 @@ function ListView({ repo, onChange }: { repo: ReportRepository; onChange: () => 
   const [q, setQ] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const all = repo.list();
-  const list = all.filter((r) => `${r.number} ${r.data.orderId} ${r.data.batch} ${r.data.line}`.toLowerCase().includes(q.toLowerCase()));
+  const list = all.filter((r) => `${r.number} ${r.data.orderId} ${r.data.batch} ${r.data.materialNo} ${r.data.materialName} ${r.data.line}`.toLowerCase().includes(q.toLowerCase()));
 
   const exportBackup = () => {
     const blob = new Blob([repo.exportJson()], { type: "application/json" });
@@ -85,7 +87,7 @@ function ListView({ repo, onChange }: { repo: ReportRepository; onChange: () => 
         <button className="primary" onClick={() => go("/neu")}>+ Neuer Bericht</button>
       </div>
       <div className="toolbar">
-        <input placeholder="Suche (Nr., Auftrag, Charge, Linie)" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input placeholder="Suche (Nr., Auftrags-ID, Charge, Material, Linie)" value={q} onChange={(e) => setQ(e.target.value)} />
         <button onClick={exportBackup}>Backup exportieren</button>
         <label className="button">Backup importieren
           <input type="file" accept="application/json,.json" hidden onChange={(e) => importBackup(e.target.files?.[0])} />
@@ -95,13 +97,13 @@ function ListView({ repo, onChange }: { repo: ReportRepository; onChange: () => 
       {msg && <p className="info">{msg}</p>}
       {list.length === 0 ? <p className="muted">Keine Berichte.</p> : (
         <table>
-          <thead><tr><th>Nr.</th><th>Status</th><th>Auftrag</th><th>Charge</th><th>Linie</th><th>Datum</th><th /></tr></thead>
+          <thead><tr><th>Nr.</th><th>Status</th><th>Auftrags-ID</th><th>Material</th><th>Charge</th><th>Linie</th><th>Datum</th><th /></tr></thead>
           <tbody>
             {list.map((r) => (
               <tr key={r.id}>
                 <td><a href={`#/bericht/${r.id}`}>{r.number}</a></td>
                 <td><span className={`badge ${r.status}`}>{r.status === "entwurf" ? "Entwurf" : "Abgeschlossen"}</span></td>
-                <td>{r.data.orderId}</td><td>{r.data.batch}</td><td>{r.data.line}</td><td>{formatDate(r.data.date)}</td>
+                <td>{r.data.orderId}</td><td>{r.data.materialNo}{r.data.materialName && <div className="muted">{r.data.materialName}</div>}</td><td>{r.data.batch}</td><td>{r.data.line}</td><td>{formatDate(r.data.date)}</td>
                 <td><a href={`#/druck/${r.id}`}>Drucken</a></td>
               </tr>
             ))}
@@ -135,7 +137,7 @@ function Editor({ repo, id }: { repo: ReportRepository; id: number | null }) {
     }
   };
   const field = (f: FieldName, el: React.ReactNode) => (
-    <label className={`field ${f === "description" || f === "measures" ? "wide" : ""}`}>
+    <label className={`field ${["description", "cause", "measures", "impact", "correction", "materialName"].includes(f) ? "wide" : ""}`}>
       <span>{FIELD_LABEL[f]}</span>{el}{errors[f] && <em className="err">{errors[f]}</em>}
     </label>
   );
@@ -143,7 +145,8 @@ function Editor({ repo, id }: { repo: ReportRepository; id: number | null }) {
     field(f, <input value={data[f]} onChange={set(f)} disabled={readOnly} {...extra} />);
   const select = (f: FieldName, opts: readonly string[]) =>
     field(f, <select value={data[f]} onChange={set(f)} disabled={readOnly}><option value="">– bitte wählen –</option>{opts.map((o) => <option key={o}>{o}</option>)}</select>);
-  const area = (f: FieldName) => field(f, <textarea rows={4} value={data[f]} onChange={set(f)} disabled={readOnly} />);
+  const area = (f: TextField) =>
+    field(f, <AssistedTextarea field={f} value={data[f]} disabled={readOnly} onChange={(v) => setData((d) => ({ ...d, [f]: v }))} />);
 
   return (
     <section>
@@ -154,18 +157,23 @@ function Editor({ repo, id }: { repo: ReportRepository; id: number | null }) {
       {!readOnly && <OcrImport current={data} onApply={setData} />}
       <fieldset><legend>Auftragsdaten</legend>
         <div className="grid">
-          {text("orderId", { inputMode: "numeric", placeholder: "z. B. 4711001" })}
-          {text("batch", { placeholder: "z. B. DEMO-0815" })}
-          {text("materialNo")}
-          {select("line", LINES)}{select("shift", SHIFTS)}
-          {text("date", { type: "date" })}
+          {text("orderId", { inputMode: "numeric", placeholder: "z. B. 100045821" })}
+          {text("materialNo", { placeholder: "z. B. 8812345" })}
+          {text("batch", { placeholder: "z. B. MW26A0417" })}
+          {text("materialName", { placeholder: "z. B. Musterprodukt 20 mg Filmtabletten (fiktiv)" })}
+          {text("quantity", { inputMode: "decimal", placeholder: "z. B. 120000" })}
+          {select("unit", UNITS)}
+          {text("date", { type: "date" })}{select("shift", SHIFTS)}{select("line", LINES)}
         </div>
       </fieldset>
       <fieldset><legend>Abweichung</legend>
-        <div className="grid">{select("category", CATEGORIES)}{area("description")}{area("measures")}</div>
+        <div className="grid">{select("category", CATEGORIES)}{area("description")}{area("cause")}</div>
+      </fieldset>
+      <fieldset><legend>Maßnahmen &amp; Bewertung</legend>
+        <div className="grid">{area("measures")}{area("impact")}{area("correction")}</div>
       </fieldset>
       <fieldset><legend>Freigabe</legend>
-        <div className="grid">{text("reportedBy")}{text("shiftLead")}</div>
+        <div className="grid">{text("reportedBy", { placeholder: "z. B. MM" })}{text("shiftLead", { placeholder: "z. B. EM" })}</div>
       </fieldset>
       {msg && <p className="info">{msg}</p>}
       {!readOnly && (

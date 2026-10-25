@@ -34,3 +34,8 @@ footer { margin-top: 32px; text-align: center; }
 .signatures { display: flex; gap: 48px; margin-top: 64px; }
 .signatures div { flex: 1; border-top: 1px solid #000; padding-top: 4px; font-size: 12px; }
 @media print { .no-print { display: none !important; } body { background: #fff; } .print { padding: 0; } }
+textarea::placeholder { color: #8a93a0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.chip { font-size: 12px; padding: 3px 10px; border-radius: 14px; background: #eef4fb; border-color: #c9d9ec; color: #0b3d63; }
+.chip:hover { background: #dcebfa; }
+.chip:focus-visible, button:focus-visible { outline: 2px solid #0b5f9e; outline-offset: 2px; }

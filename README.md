@@ -12,6 +12,7 @@ data from a scanned PDF via in-browser OCR.
 ## Features
 - Report form with zod validation (draft vs. complete), running numbers `DR-YYYY-NNNN`
 - History list with search, status badges
+- Writing help for all free-text fields: structure-hint placeholders (Was? Wann? Wo? Wie viel?) and clickable phrase chips that append text and select `…` gaps for editing
 - Print view (A4, signature lines, `@media print`)
 - Backup export/import (validated JSON); corrupt localStorage is backed up and writes are locked, never silently overwritten
 - **OCR import**: PDF text layer via pdf.js, otherwise lazy-loaded **tesseract.js** (self-hosted under `public/tesseract`, no CDN) with orientation detection and binarisation. Results go to a preview table — OCR values are marked *„bitte prüfen“*, only empty fields are pre-selected

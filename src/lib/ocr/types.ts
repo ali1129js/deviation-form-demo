@@ -1,6 +1,6 @@
 import type { FieldName } from "../schema";
 
-export const IMPORT_FIELDS = ["orderId", "batch", "materialNo", "line", "shift", "date"] as const satisfies readonly FieldName[];
+export const IMPORT_FIELDS = ["orderId", "materialNo", "materialName", "batch", "quantity", "unit", "line", "shift", "date"] as const satisfies readonly FieldName[];
 export type ImportField = (typeof IMPORT_FIELDS)[number];
 
 export type Confidence = "hoch" | "mittel" | "niedrig";

@@ -6,9 +6,11 @@ import { ImportError } from "./types";
 import { emptyData } from "../schema";
 
 const SAMPLE = `MUSTERWERK GMBH (FIKTIV)
-Auftrag: 4711002
-Charge: DEMO-1234
-Material-Nr.: 900-555-77
+Auftrags-ID: 100045933
+Material-Nr.: 8812345
+Materialname: Musterprodukt 20 mg Filmtabletten (fiktiv)
+Charge: MW26C0309
+Auftragsmenge: 96.000 Stück
 Linie: 3
 Schicht: Spät
 Datum: 18.03.2026`;
@@ -17,13 +19,17 @@ describe("parser", () => {
   it("parses all fields", () => {
     const r = parseOrderText(SAMPLE, "t");
     expect(Object.fromEntries(Object.entries(r.values).map(([k, v]) => [k, v.value]))).toEqual({
-      orderId: "4711002", batch: "DEMO-1234", materialNo: "900-555-77", line: "Linie 3", shift: "Spät", date: "2026-03-18",
+      orderId: "100045933", materialNo: "8812345", materialName: "Musterprodukt 20 mg Filmtabletten (fiktiv)",
+      batch: "MW26C0309", quantity: "96000", unit: "Stück", line: "Linie 3", shift: "Spät", date: "2026-03-18",
     });
   });
   it("fixes OCR digit confusions", () => {
     expect(fixDigits("47l1OO2")).toBe("4711002");
     const r = parseOrderText("Auftrag: 47l1OO2", "t");
     expect(r.values.orderId).toMatchObject({ value: "4711002", confidence: "mittel" });
+  });
+  it("flags unknown units", () => {
+    expect(parseOrderText("Auftragsmenge: 500 Fässer", "t").values.unit?.confidence).toBe("niedrig");
   });
   it("flags unknown line", () => {
     expect(parseOrderText("Linie: 7", "t").values.line).toMatchObject({ value: "", confidence: "niedrig" });
@@ -65,7 +71,7 @@ describe("ocr helpers", () => {
 describe("preview", () => {
   const res = parseOrderText(SAMPLE, "t");
   it("preselects only empty fields", () => {
-    const rows = previewRows(res, { ...emptyData(), batch: "OTHER", orderId: "4711002" });
+    const rows = previewRows(res, { ...emptyData(), batch: "OTHER", orderId: "100045933" });
     const by = Object.fromEntries(rows.map((r) => [r.field, r]));
     expect(by.orderId?.status).toBe("gleich");
     expect(by.orderId?.selectable).toBe(false);
@@ -76,7 +82,7 @@ describe("preview", () => {
   it("applies only selected rows", () => {
     const rows = previewRows(res, emptyData());
     const out = applySelection(emptyData(), rows, new Set(["batch", "line"]));
-    expect(out.batch).toBe("DEMO-1234");
+    expect(out.batch).toBe("MW26C0309");
     expect(out.line).toBe("Linie 3");
     expect(out.orderId).toBe("");
   });
