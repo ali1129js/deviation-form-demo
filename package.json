@@ -1,0 +1,35 @@
+{
+  "name": "deviation-form-demo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "assets:tesseract": "node scripts/copy-tesseract.mjs",
+    "predev": "npm run assets:tesseract",
+    "prebuild": "npm run assets:tesseract",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "sample:pdf": "python3 scripts/make-sample-pdf.py"
+  },
+  "dependencies": {
+    "@tesseract.js-data/deu": "^1.0.0",
+    "pdfjs-dist": "^5.6.205",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tesseract.js": "^7.0.0",
+    "tesseract.js-core": "^7.0.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5",
+    "vitest": "^3.2.7"
+  }
+}
